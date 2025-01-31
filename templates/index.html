@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Squid Proxy Manager</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="mb-4">Squid Proxy Manager</h1>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <!-- Main Form -->
+      <form method="POST" enctype="multipart/form-data">
+        <!-- IP List Input -->
+        <div class="mb-3">
+          <label for="ip_list" class="form-label"
+            >IP List (comma, space, or newline separated):</label
+          >
+          <textarea
+            class="form-control"
+            id="ip_list"
+            name="ip_list"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+
+        <!-- Username Input -->
+        <div class="mb-3">
+          <label for="username" class="form-label">Username:</label>
+          <select class="form-select" id="username" name="username" required>
+            <option value="ubuntu">ubuntu</option>
+            <option value="admin">admin</option>
+            <option value="root">root</option>
+            <option value="administrator">administrator</option>
+            <option value="Admin">Admin</option>
+            <option value="Administrator">Administrator</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <!-- Custom Username Input -->
+        <div class="mb-3" id="custom_username_field" style="display: none">
+          <label for="custom_username" class="form-label"
+            >Custom Username:</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            id="custom_username"
+            name="custom_username"
+          />
+        </div>
+
+        <!-- Authentication Method -->
+        <div class="mb-3">
+          <label class="form-label">Authentication Method:</label>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="auth_method"
+              id="auth_key"
+              value="key"
+              checked
+            />
+            <label class="form-check-label" for="auth_key">SSH Key</label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="auth_method"
+              id="auth_password"
+              value="password"
+            />
+            <label class="form-check-label" for="auth_password">Password</label>
+          </div>
+        </div>
+
+        <!-- SSH Key File Input -->
+        <div class="mb-3" id="key_file_field">
+          <label for="key_file" class="form-label">SSH Key File (.pem):</label>
+          <input
+            type="file"
+            class="form-control"
+            id="key_file"
+            name="key_file"
+            accept=".pem"
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div class="mb-3" id="password_field" style="display: none">
+          <label for="password" class="form-label">Password:</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+          />
+        </div>
+
+        <!-- Action Selection -->
+        <div class="mb-3">
+          <label class="form-label">Action:</label>
+          <select class="form-select" id="action" name="action" required>
+            <option value="create_proxy">Create Proxy</option>
+            <option value="port_change">Change Port</option>
+            <option value="uninstall">Uninstall Squid</option>
+          </select>
+        </div>
+
+        <!-- Proxy Credentials (for Create Proxy) -->
+        <div class="mb-3" id="proxy_credentials">
+          <label for="proxy_username" class="form-label">Proxy Username:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="proxy_username"
+            name="proxy_username"
+          />
+          <label for="proxy_password" class="form-label">Proxy Password:</label>
+          <input
+            type="password"
+            class="form-control"
+            id="proxy_password"
+            name="proxy_password"
+          />
+        </div>
+
+        <!-- New Port Input (for Port Change) -->
+        <div class="mb-3" id="new_port_field" style="display: none">
+          <label for="new_port" class="form-label">New Port:</label>
+          <input
+            type="number"
+            class="form-control"
+            id="new_port"
+            name="new_port"
+          />
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+
+      <!-- Logs Display -->
+      {% if logs %}
+      <h2 class="mt-5">SSH Logs</h2>
+      <div class="mt-3">
+        {% for ip, log in logs.items() %}
+        <div class="card mb-3">
+          <div class="card-header">
+            <strong>{{ ip }}</strong>
+          </div>
+          <div class="card-body">
+            <h5>Command Output:</h5>
+            <pre>{{ log[0] if log[0] else "No output" }}</pre>
+            {% if log[1] %}
+            <h5 class="text-danger">Error:</h5>
+            <pre>{{ log[1] }}</pre>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Show/hide custom username field
+      document
+        .getElementById("username")
+        .addEventListener("change", function () {
+          const customUsernameField = document.getElementById(
+            "custom_username_field"
+          );
+          if (this.value === "custom") {
+            customUsernameField.style.display = "block";
+          } else {
+            customUsernameField.style.display = "none";
+          }
+        });
+
+      // Show/hide password field based on authentication method
+      document
+        .querySelectorAll('input[name="auth_method"]')
+        .forEach(function (radio) {
+          radio.addEventListener("change", function () {
+            const keyFileField = document.getElementById("key_file_field");
+            const passwordField = document.getElementById("password_field");
+            if (this.value === "password") {
+              keyFileField.style.display = "none";
+              passwordField.style.display = "block";
+            } else {
+              keyFileField.style.display = "block";
+              passwordField.style.display = "none";
+            }
+          });
+        });
+
+      // Show/hide fields based on action
+      document.getElementById("action").addEventListener("change", function () {
+        const proxyCredentials = document.getElementById("proxy_credentials");
+        const newPortField = document.getElementById("new_port_field");
+        if (this.value === "create_proxy") {
+          proxyCredentials.style.display = "block";
+          newPortField.style.display = "none";
+        } else if (this.value === "port_change") {
+          proxyCredentials.style.display = "none";
+          newPortField.style.display = "block";
+        } else {
+          proxyCredentials.style.display = "none";
+          newPortField.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

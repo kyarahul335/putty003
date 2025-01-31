@@ -1,0 +1,9 @@
+Flask
+gunicorn
+requests
+flask-login
+Flask-Session
+psycopg2
+celery
+redis
+paramiko
